@@ -1,6 +1,7 @@
 local json = require("xxx.json")
 local t = require('xxx.tree')
 local c
+local Split = require("nui.split")
 
 local W = {
     bufw = nil,
@@ -44,31 +45,23 @@ function W.create_window()
     end
 
     local ew = vim.api.nvim_get_option("columns")
-    local eh = vim.api.nvim_get_option("lines")
-    local row, col
 
-    if W.position == "bottom_right" then
-        W.bufww = math.floor(ew / 2.5)
-        W.bufwh = math.floor(eh / 2)
-        row = eh - W.bufwh
-        col = ew - W.bufww
-    else
-        W.bufww = math.floor(ew * 0.7)
-        W.bufwh = math.floor(eh * 0.8)
-        row = math.floor((eh - W.bufwh) / 2)
-        col = math.floor((ew - W.bufww) / 2)
-    end
+	W.bufww = math.floor(ew / 4)
 
     if W.bufw == nil or not vim.api.nvim_win_is_valid(W.bufw) then
-        W.bufw = vim.api.nvim_open_win(W.buff, true, {
-            relative = "editor",
-            width = W.bufww,
-            height = W.bufwh,
-            row = row,
-            col = col,
-            border = "double",
-        })
-        vim.api.nvim_win_set_option(W.bufw, "scl", "no")
+		local split = Split({
+			relative = "editor",
+			position = "right",
+			size = W.bufww,
+		})
+		split:map("n", "q", function()
+			split:unmount()
+		end, { noremap = true })
+
+		split:mount()
+
+		W.bufw = split.winid
+		vim.api.nvim_win_set_option(W.bufw, "scl", "no")
         vim.api.nvim_win_set_option(W.bufw, "cursorline", true)
         vim.api.nvim_win_set_option(W.bufw, "wrap", false)
         vim.api.nvim_win_set_buf(W.bufw, W.buff)
@@ -116,7 +109,7 @@ function W.write_line()
         end
 
         local symbol = string.format("%s%s [%s]%s", string.rep("  ", node.level), fold_icon, kind_icon, node.name)
-        local line = symbol .. string.rep(" ", math.floor(W.bufww / 2.5) - #symbol) .. filename
+        local line = symbol .. string.rep(" ", math.max(math.floor(W.bufww / 2.5) - #symbol, 1)) .. filename
 
         table.insert(fmt_lines, line)
     end
