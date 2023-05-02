@@ -68,7 +68,7 @@ function W.create_window()
 	vim.cmd("syntax match Number /" .. c.icon.fold .. "/")
 	vim.cmd("syntax match Character /" .. c.icon.unfold .. "/")
 	vim.cmd("syntax match Function /].*:/hs=s+1,he=e-1")
-	vim.cmd([[:syntax match Type ?[a-zA-Z/]\+.go?]])
+	vim.cmd([[:syntax match Type ?[a-zA-Z/_]\+.go?]])
 end
 
 function W.write_line()
