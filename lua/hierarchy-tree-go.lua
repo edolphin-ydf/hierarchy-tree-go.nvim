@@ -26,6 +26,7 @@ function H.global_keymap()
 	vim.keymap.set("n", c.keymap.outgoing, "<cmd>lua require\"hierarchy-tree-go\".outgoing()<cr>", { silent = true })
 	vim.keymap.set("n", c.keymap.open, "<cmd>lua require\"hierarchy-tree-go\".open()<cr>", { silent = true })
 	vim.keymap.set("n", c.keymap.close, "<cmd>lua require\"hierarchy-tree-go\".close()<cr>", { silent = true })
+	vim.keymap.set("n", c.keymap.tograph, "<cmd>lua require\"hierarchy-tree-go\".tosvg()<cr>", { noremap = true })
 end
 
 function H.incoming()
@@ -227,6 +228,73 @@ function H.expand()
 		vim.cmd("execute  \"normal! " .. line .. "G\"")
 
 	end)
+end
+
+
+-- walk all nodes and call the callback function with parent and current child node
+function H.walk_nodes(callback)
+	local function walk(node, parent)
+		if node == nil then
+			return
+		end
+
+		callback(node, parent)
+
+		if node.children ~= nil then
+			for _, child in ipairs(node.children) do
+				walk(child, node)
+			end
+		end
+	end
+
+	walk(t.root, nil)
+end
+
+function H.tosvg()
+	-- create temp file
+	local tmpfile = os.tmpname()
+	local f = io.open(tmpfile, "w")
+	if not f then
+		notify("can not open temp file", vim.log.levels.ERROR, {title = "Hierarchy to svg"})
+		return
+	end
+
+	-- write graphviz header
+	f:write("digraph hierarchy {\n")
+
+	-- a local function output_node which format a node in format parent -> child and save to a set
+	local set = {}
+	local function output_node(node, parent)
+		if parent == nil or node == nil then
+			return
+		end
+
+		local line = string.format("%s -> %s;", node.name, parent.name)
+
+		-- save to set
+		set[line] = true
+	end
+
+	-- call walk_nodes with output_node function
+	H.walk_nodes(output_node)
+
+	-- write all lines in set to file
+	for line, _ in pairs(set) do
+		f:write(line .. "\n")
+	end
+
+	-- write graphviz footer
+	f:write("}\n")
+	-- close the file
+	f:close()
+
+	-- gen svg tmp filename
+	local svgfile = tmpfile .. ".svg"
+	-- execute cmd dot -Tsvg tmpfile -o svgfile
+	local cmd = string.format("dot -Tsvg %s -o %s", tmpfile, svgfile)
+	vim.fn.system(cmd)
+	-- open svg file in browser
+	vim.fn.system(string.format("open %s", svgfile))
 end
 
 function H.close()

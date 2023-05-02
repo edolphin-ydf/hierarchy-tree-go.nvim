@@ -23,6 +23,7 @@ function C.setup(user_config)
 			-- focus: if hierarchy win is valid and is current win, close
 			-- focus  if hierarchy win not existing,open and focus
 			focus = "<space>fu",
+			tograph = "<leader>fs",
 
 			-- bufkeymap
 			expand = "o", -- expand or collapse hierarchy
