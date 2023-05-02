@@ -1,4 +1,3 @@
-local json = require("xxx.json")
 local t = require('xxx.tree')
 local c
 local Split = require("nui.split")
@@ -21,9 +20,6 @@ local W = {
 
 function W.setup()
     c = require("xxx.config").get_data()
-    vim.cmd("highlight " .. W.hl_cursorline_name .. " " .. c.hl.cursorline)
-    vim.cmd("highlight " .. W.hl_current_module .. " " .. c.hl.current_module)
-    vim.cmd("highlight " .. W.hl_others_module .. " " .. c.hl.others_module)
 end
 
 function W.create_window()
@@ -65,10 +61,14 @@ function W.create_window()
         vim.api.nvim_win_set_option(W.bufw, "cursorline", true)
         vim.api.nvim_win_set_option(W.bufw, "wrap", false)
         vim.api.nvim_win_set_buf(W.bufw, W.buff)
-        vim.api.nvim_win_set_option(W.bufw, "winhighlight", "CursorLine:" .. W.hl_cursorline_name)
     end
 
     W.write_line()
+
+	vim.cmd("syntax match Number /" .. c.icon.fold .. "/")
+	vim.cmd("syntax match Character /" .. c.icon.unfold .. "/")
+	vim.cmd("syntax match Function /].*:/hs=s+1,he=e-1")
+	vim.cmd([[:syntax match Type ?[a-zA-Z/]\+.go?]])
 end
 
 function W.write_line()
@@ -109,17 +109,13 @@ function W.write_line()
         end
 
         local symbol = string.format("%s%s [%s]%s", string.rep("  ", node.level), fold_icon, kind_icon, node.name)
-        local line = symbol .. string.rep(" ", math.max(math.floor(W.bufww / 2.5) - #symbol, 1)) .. filename
+        local line = symbol .. string.rep(" ", math.floor(W.bufww / 2.5) - #symbol) .. ":" .. filename
 
         table.insert(fmt_lines, line)
     end
 
     vim.api.nvim_buf_set_lines(W.buff, 0, -1, false, {})
     vim.api.nvim_buf_set_lines(W.buff, 0, #fmt_lines, false, fmt_lines)
-
-    for index, item in ipairs(hl) do
-        vim.api.nvim_buf_add_highlight(W.buff, -1, item, index - 1, 1, -1)
-    end
 
     vim.api.nvim_set_current_win(W.bufw)
     vim.api.nvim_buf_set_option(W.buff, "modifiable", false)

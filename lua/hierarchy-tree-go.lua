@@ -269,7 +269,12 @@ function H.tosvg()
 			return
 		end
 
-		local line = string.format("%s -> %s;", node.name, parent.name)
+		local line
+		if t.direction == "outgoing" then
+			line = string.format("\"%s:%s\" -> \"%s:%s\";", parent.uri, parent.name, node.uri, node.name)
+		else
+			line = string.format("\"%s:%s\" -> \"%s:%s\";", node.uri, node.name, parent.uri, parent.name)
+		end
 
 		-- save to set
 		set[line] = true
