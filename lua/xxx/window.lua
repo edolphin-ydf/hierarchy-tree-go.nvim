@@ -81,7 +81,6 @@ function W.write_line()
 
     local fmt_lines = {}
     local cwd = vim.fn.getcwd()
-    local hl = {}
 
 
     for _, node in ipairs(nodes) do
@@ -101,10 +100,8 @@ function W.write_line()
 
         local filename = string.sub(node.uri, 8)
         if string.sub(filename, 1, #cwd) ~= cwd then -- others modules
-            table.insert(hl, W.hl_others_module)
             filename = node.detail
         else
-            table.insert(hl, W.hl_current_module)
             filename = string.sub(filename, #cwd + 2)
         end
 

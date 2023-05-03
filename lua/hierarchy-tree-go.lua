@@ -250,7 +250,49 @@ function H.walk_nodes(callback)
 	walk(t.root, nil)
 end
 
-function H.tosvg()
+function H.nodes2dot()
+	local set = {}
+
+	local cwd = vim.fn.getcwd()
+
+	-- a local function output_node which format a node in format parent -> child and save to a set
+	local function output_node(node, parent)
+		if parent == nil or node == nil then
+			return
+		end
+
+        local node_file_name = string.sub(node.uri, 8)
+        if string.sub(node_file_name, 1, #cwd) ~= cwd then -- others modules
+            node_file_name = node.detail
+        else
+            node_file_name = string.sub(node_file_name, #cwd + 2)
+        end
+
+        local parent_file_name = string.sub(parent.uri, 8)
+        if string.sub(parent_file_name, 1, #cwd) ~= cwd then -- others modules
+            parent_file_name = parent.detail
+        else
+            parent_file_name = string.sub(parent_file_name, #cwd + 2)
+        end
+
+		local line
+		if t.direction == "outgoing" then
+			line = string.format("\"%s:%s\" -> \"%s:%s\";", parent_file_name, parent.name, node_file_name, node.name)
+		else
+			line = string.format("\"%s:%s\" -> \"%s:%s\";", node_file_name, node.name, parent_file_name, parent.name)
+		end
+
+		-- save to set
+		set[line] = true
+	end
+
+	-- call walk_nodes with output_node function
+	H.walk_nodes(output_node)
+
+	return set
+end
+
+H.write_nodes_to_tmp_file_in_dot_format = function ()
 	-- create temp file
 	local tmpfile = os.tmpname()
 	local f = io.open(tmpfile, "w")
@@ -261,27 +303,10 @@ function H.tosvg()
 
 	-- write graphviz header
 	f:write("digraph hierarchy {\n")
+	f:write("rankdir=LR;\n")
 
-	-- a local function output_node which format a node in format parent -> child and save to a set
-	local set = {}
-	local function output_node(node, parent)
-		if parent == nil or node == nil then
-			return
-		end
-
-		local line
-		if t.direction == "outgoing" then
-			line = string.format("\"%s:%s\" -> \"%s:%s\";", parent.uri, parent.name, node.uri, node.name)
-		else
-			line = string.format("\"%s:%s\" -> \"%s:%s\";", node.uri, node.name, parent.uri, parent.name)
-		end
-
-		-- save to set
-		set[line] = true
-	end
-
-	-- call walk_nodes with output_node function
-	H.walk_nodes(output_node)
+	-- convert all nodes to dot format
+	local set = H.nodes2dot()
 
 	-- write all lines in set to file
 	for line, _ in pairs(set) do
@@ -293,12 +318,72 @@ function H.tosvg()
 	-- close the file
 	f:close()
 
-	-- gen svg tmp filename
-	local svgfile = tmpfile .. ".svg"
+	return tmpfile
+end
+
+local svg_template = [[
+<!DOCTYPE html>
+<html>
+	<head>
+        <meta charset="utf-8" />
+		<title>Test</title>
+	</head>
+<style>
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+}
+</style>
+	<body>
+	
+		<svg id="thesvg" class="center">
+			%s
+		</svg>
+	<script src="%s"></script>
+	<script>
+		var panZoomTiger = svgPanZoom('#thesvg');
+	</script>
+</html>
+]]
+
+function H.convert_dot_2_html(dotFile)
 	-- execute cmd dot -Tsvg tmpfile -o svgfile
-	local cmd = string.format("dot -Tsvg %s -o %s", tmpfile, svgfile)
-	vim.fn.system(cmd)
-	-- open svg file in browser
+	local cmd = string.format("dot -Tsvg %s", dotFile)
+	local dot_result = vim.fn.system(cmd)
+	-- check v:shell_error
+	if vim.api.nvim_eval('v:shell_error') ~= 0 then
+		notify("execute dot command fail: " .. dot_result, vim.log.levels.ERROR, {title = "Hierarchy to svg"})
+		return
+	end
+
+	-- get neovim plugin home dir with packer
+	local packer_dir = vim.fn.stdpath("data") .. "/site/pack/packer"
+	-- get path of svg-pan-zoom.min.js
+	local svg_pan_zoom = packer_dir .. "/start/hierarchy-tree-go.nvim/lua/svg-pan-zoom.min.js"
+
+	local svg_html = string.format(svg_template, dot_result, svg_pan_zoom)
+
+	-- write svg_html to a temp file
+	local svgfile = os.tmpname() .. ".html"
+	local f = io.open(svgfile, "w")
+	if not f then
+		notify("can not open temp file", vim.log.levels.ERROR, {title = "Hierarchy to svg"})
+		return
+	end
+	f:write(svg_html)
+	f:close()
+
+	return svgfile
+end
+
+function H.tosvg()
+	local dotFile = H.write_nodes_to_tmp_file_in_dot_format()
+
+	local svgfile = H.convert_dot_2_html(dotFile)
+
 	vim.fn.system(string.format("open %s", svgfile))
 end
 
