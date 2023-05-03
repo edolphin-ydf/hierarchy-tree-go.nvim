@@ -63,12 +63,20 @@ function W.create_window()
         vim.api.nvim_win_set_buf(W.bufw, W.buff)
     end
 
-    W.write_line()
+	W.highlight()
 
+    W.write_line()
+end
+
+function W.highlight()
 	vim.cmd("syntax match Number /" .. c.icon.fold .. "/")
 	vim.cmd("syntax match Character /" .. c.icon.unfold .. "/")
-	vim.cmd("syntax match Function /].*:/hs=s+1,he=e-1")
-	vim.cmd([[:syntax match Type ?[a-zA-Z/_]\+.go?]])
+	-- \ze 表示不匹配后面的冒号
+	vim.cmd([[
+		syntax match ErrorMsg ":"
+		syntax match Function /\w\+\s\+\ze:/
+		syntax match Type ?[a-zA-Z/_]\+.go?
+	]])
 end
 
 function W.write_line()
