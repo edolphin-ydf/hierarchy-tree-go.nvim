@@ -3,8 +3,8 @@ local C = {}
 function C.setup(user_config)
 	C.data = {
 		icon = {
-			fold = "", -- fold icon
-			unfold = "", -- unfold icon
+			fold = "", -- fold icon
+			unfold = "", -- unfold icon
 			func = "₣", -- symbol
 			last = '☉', -- last level icon
 		},
