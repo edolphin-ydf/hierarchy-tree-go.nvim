@@ -324,28 +324,28 @@ end
 local svg_template = [[
 <!DOCTYPE html>
 <html>
-	<head>
-        <meta charset="utf-8" />
-		<title>Test</title>
-	</head>
-<style>
-.center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  width: 100vw;
-}
-</style>
-	<body>
-	
-		<svg id="thesvg" class="center">
-			%s
-		</svg>
-	<script src="%s"></script>
-	<script>
-		var panZoomTiger = svgPanZoom('#thesvg');
-	</script>
+  <head>
+    <meta charset="utf-8" />
+    <title>Hierarchy tree</title>
+    <style>
+    .center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: 100vw;
+    }
+    </style>
+  </head>
+  <body>
+    <svg id="thesvg" class="center">
+      %s
+    </svg>
+    <script src="%s"></script>
+    <script>
+      var panZoomTiger = svgPanZoom('#thesvg');
+    </script>
+  </body>
 </html>
 ]]
 
