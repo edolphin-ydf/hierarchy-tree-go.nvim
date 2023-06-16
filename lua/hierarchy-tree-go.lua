@@ -21,12 +21,17 @@ function H.setup(user_config)
 end
 
 function H.global_keymap()
-	vim.keymap.set("n", c.keymap.incoming, "<cmd>lua require\"hierarchy-tree-go\".incoming()<cr>", { silent = true })
-	vim.keymap.set("n", c.keymap.focus, "<cmd>lua require\"hierarchy-tree-go\".focus()<cr>", { silent = true })
-	vim.keymap.set("n", c.keymap.outgoing, "<cmd>lua require\"hierarchy-tree-go\".outgoing()<cr>", { silent = true })
-	vim.keymap.set("n", c.keymap.open, "<cmd>lua require\"hierarchy-tree-go\".open()<cr>", { silent = true })
-	vim.keymap.set("n", c.keymap.close, "<cmd>lua require\"hierarchy-tree-go\".close()<cr>", { silent = true })
-	vim.keymap.set("n", c.keymap.tograph, "<cmd>lua require\"hierarchy-tree-go\".tosvg()<cr>", { noremap = true })
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "go",
+    callback = function(event)
+      vim.keymap.set("n", c.keymap.incoming, '<cmd>lua require"hierarchy-tree-go".incoming()<cr>', { silent = true, desc = "Hierarchy tree call incoming", buffer = event.buf })
+      vim.keymap.set("n", c.keymap.outgoing, '<cmd>lua require"hierarchy-tree-go".outgoing()<cr>', { silent = true, desc = "Hierarchy tree call outgoing", buffer = event.buf })
+      vim.keymap.set("n", c.keymap.open, '<cmd>lua require"hierarchy-tree-go".open()<cr>', { silent = true, desc = "Hierarchy tree window open", buffer = event.buf })
+      vim.keymap.set("n", c.keymap.close, '<cmd>lua require"hierarchy-tree-go".close()<cr>', { silent = true, desc = "Hierarchy tree window close", buffer = event.buf })
+      vim.keymap.set("n", c.keymap.focus, '<cmd>lua require"hierarchy-tree-go".focus()<cr>', { silent = true, desc = "Hierarchy tree window focus", buffer = event.buf })
+      vim.keymap.set("n", c.keymap.tograph, '<cmd>lua require"hierarchy-tree-go".tosvg()<cr>', { noremap = true, desc = "Hierarchy tree to graph", buffer = event.buf })
+    end,
+  })
 end
 
 function H.incoming()
